@@ -3,6 +3,7 @@ from .utility.getTrackerId import GetTrackerId
 from .utility.getTrackerRoutingKey import GetRoutingKey
 import logging,json
 def start():
+
     #   Setup AMQP connection & channel 
     amqpconnection = CreateAMQPConnection()
     amqpchannel = amqpconnection.channel()
@@ -16,6 +17,7 @@ def OnPreConsume(ch, method, properties, body):
     try:
         OnConsume(ch,method,properties,body)
     except Exception as e :
+        print(e)
         logging.error(e)
         logging.error('Failed to handle , message unacked')
         logging.error('Payload content: %s'%str(body))
