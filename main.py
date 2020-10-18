@@ -1,6 +1,5 @@
-from src.models.UserModel import User 
 from src.models.BoundaryModel import Boundary
-from src import app
+from src.app import Application
 import logging
 import sys 
 
@@ -9,5 +8,5 @@ import sys
 
 if __name__ == '__main__':
     logging.info("Boundary Monitor Start!!!!!!")
-    
+    app = Application()
     app.start()

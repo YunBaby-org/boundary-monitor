@@ -6,4 +6,4 @@ load_dotenv()
 
 engine = create_engine('postgresql://postgres:%s@localhost/postgres'%(os.getenv("DB_PASS")),echo=True)
 DBsession = sessionmaker(bind=engine)
-session = DBsession()
+#session = DBsession()
