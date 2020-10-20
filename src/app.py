@@ -3,7 +3,8 @@ from .utility.getTrackerId import GetTrackerId
 from .utility.getTrackerRoutingKey import GetRoutingKey
 from .models import DBsession
 from .models.BoundaryModel import Boundary
-import logging,json
+from sqlalchemy import text
+import logging,json,pytz,datetime 
 
 class Application():
     def start(self):
@@ -18,7 +19,7 @@ class Application():
         self.amqpchannel.basic_consume(queue='monitor.boundary',auto_ack=True,on_message_callback=self.OnPreConsume)
         self.amqpchannel.start_consuming()
         logging.info("AMQP connection established")
-
+  
     def OnPreConsume(self,ch, method, properties, body):
         try:
             self.OnConsume(ch,method,properties,body)
@@ -46,9 +47,19 @@ class Application():
         if data['Response'] == 'ScanGPS' or data['Response'] == 'ScanWifiSignal_Resolved':
             geodata['Longitude'] = data['Result']['Longitude'] 
             geodata['Latitude'] = data['Result']['Latitude']   
-        print(geodata)
+
         
-        #   Get this tracker's current boundary
+        #query target's boundary information by current time
+        current_time = datetime.datetime.now(pytz.timezone('Asia/Taipei')).strftime("%Y-%m-%d %H:%M:%S%z")
+        print('current time ',current_time)
+        current_boundary = self.session.query(Boundary).filter(
+            text("tracker_id=:trackerid and :current>=time_start and :current<=time_end")
+        ).params(trackerid=trackerId,current=str(current_time)).one()
+        
+        print(current_boundary)
+        print(current_boundary.id)
+
+
         
  
         
