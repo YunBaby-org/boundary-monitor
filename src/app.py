@@ -3,6 +3,7 @@ from .utility.getTrackerId import GetTrackerId
 from .utility.getTrackerRoutingKey import GetRoutingKey
 from .models import DBsession
 from .models.BoundaryModel import Boundary
+from .apis.location import inboundary
 from sqlalchemy import text
 import logging,json,pytz,datetime 
 
@@ -16,7 +17,7 @@ class Application():
         self.amqpchannel = self.amqpconnection.channel()
 
         #   consume boundary monitor queue 
-        self.amqpchannel.basic_consume(queue='monitor.boundary',auto_ack=True,on_message_callback=self.OnPreConsume)
+        self.amqpchannel.basic_consume(queue='monitor.boundary',on_message_callback=self.OnPreConsume)
         self.amqpchannel.start_consuming()
         logging.info("AMQP connection established")
   
@@ -49,16 +50,17 @@ class Application():
             geodata['Latitude'] = data['Result']['Latitude']   
 
         
-        #query target's boundary information by current time
+        #   query target's boundary information by current time
         current_time = datetime.datetime.now(pytz.timezone('Asia/Taipei')).strftime("%Y-%m-%d %H:%M:%S%z")
-        print('current time ',current_time)
-        current_boundary = self.session.query(Boundary).filter(
+      
+        query_data = self.session.query(Boundary).filter(
             text("tracker_id=:trackerid and :current>=time_start and :current<=time_end")
         ).params(trackerid=trackerId,current=str(current_time)).one()
-        
-        print(current_boundary)
-        print(current_boundary.id)
 
+
+        
+        print('target in boundary? ',inboundary(geodata,{"Longitude":query_data.lng,"Latitude":query_data.lat},query_data.radius))
+        ch.basic_ack(delivery_tag = method.delivery_tag)
 
         
  
