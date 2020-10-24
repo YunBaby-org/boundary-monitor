@@ -4,6 +4,7 @@ from .utility.getTrackerRoutingKey import GetRoutingKey
 from .models import DBsession
 from .models.BoundaryModel import Boundary
 from .apis.location import inboundary
+from .apis.message import SendSMS
 from sqlalchemy import text
 import logging,json,pytz,datetime 
 
@@ -34,7 +35,6 @@ class Application():
             
 
     #   AMQP message callback
-    #   handle comming message 
     def OnConsume(self,ch, method, properties, body):
         data = json.loads(body)#type dict
         trackerId = GetTrackerId(method.routing_key)
@@ -52,16 +52,22 @@ class Application():
         
         #   query target's boundary information by current time
         current_time = datetime.datetime.now(pytz.timezone('Asia/Taipei')).strftime("%Y-%m-%d %H:%M:%S%z")
-      
-        query_data = self.session.query(Boundary).filter(
+        boundaryInfo = self.session.query(Boundary).filter(
             text("tracker_id=:trackerid and :current>=time_start and :current<=time_end")
         ).params(trackerid=trackerId,current=str(current_time)).one()
 
+        #   query this tracker's info
+        trackerInfo = self.session.query()
+        #   query the owner of this tracker (we need owner's phone number to send SMS message )
+        ownerInfo = self.session.query()
 
-        
-        print('target in boundary? ',inboundary(geodata,{"Longitude":query_data.lng,"Latitude":query_data.lat},query_data.radius))
-        ch.basic_ack(delivery_tag = method.delivery_tag)
-
-        
+       
+        if inboundary(geodata,{"Longitude":boundaryInfo.lng,"Latitude":boundaryInfo.lat},boundaryInfo.radius):
+            #do nothing 
+            pass 
+        else:
+            #   send SMS message to owner of this tracker 
+            retv = SendSMS()  
  
         
+        ch.basic_ack(delivery_tag = method.delivery_tag)
