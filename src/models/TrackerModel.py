@@ -1,5 +1,6 @@
-from sqlalchemy import Column,String,Integer,DateTime,Float,SmallInteger
+from sqlalchemy import ForeignKey,Column,String,Integer,DateTime,Float,SmallInteger
 from sqlalchemy.ext.declarative import declarative_base 
+
 Base = declarative_base()
 
 class Tracker(Base):

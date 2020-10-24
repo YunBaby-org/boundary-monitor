@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-import urllib,os,requests,json
+import urllib,os,requests,json,logging
 
 load_dotenv()
 username = os.getenv("SMS_USER")
@@ -10,6 +10,8 @@ def SendSMS(mobile,message):
     global password 
     msg = 'username='+username+'&password='+password+'&mobile='+mobile+'&message='+urllib.parse.quote(message)
     ans = requests.post('http://api.twsms.com/json/sms_send.php?'+msg)
+    logging.info("SMS service response:")
+    logging.info(ans.text)
     return json.loads(ans.text)
     #   {"code":"00000","text":"Success","msgid":340146985}
     #   code 00020 點數不足

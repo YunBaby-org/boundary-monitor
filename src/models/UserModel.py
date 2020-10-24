@@ -10,5 +10,3 @@ class User(Base):
     phone = Column(String(10))
     password = Column(String(90))
 
-
-

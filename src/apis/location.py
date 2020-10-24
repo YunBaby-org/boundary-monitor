@@ -1,4 +1,4 @@
-import math,os,requests 
+import math,os,requests,logging
 from dotenv import load_dotenv
 
 
@@ -12,7 +12,10 @@ def inboundary(target,boundary,radius):
     a = float(math.sin(dLat/2)*math.sin(dLat/2)+math.cos(math.radians(target["Latitude"]))*math.cos(math.radians(boundary["Latitude"]))*math.sin(dLng/2)*math.sin(dLng/2))
     c = float(2*math.atan2(math.sqrt(a),math.sqrt(1-a)))
     dist = float(earthRadius*c)
-    print('distance ',dist)
+
+    print("distance: "+str(math.fabs(dist))+' radius: '+str(radius))
+    logging.info("distance: "+str(math.fabs(dist))+' radius: '+str(radius))
+    
     return True if math.fabs(dist)<=radius else False
 
 

@@ -3,6 +3,8 @@ from .utility.getTrackerId import GetTrackerId
 from .utility.getTrackerRoutingKey import GetRoutingKey
 from .models import DBsession
 from .models.BoundaryModel import Boundary
+from .models.TrackerModel import Tracker
+from .models.UserModel import User
 from .apis.location import inboundary
 from .apis.message import SendSMS
 from sqlalchemy import text
@@ -39,7 +41,7 @@ class Application():
         data = json.loads(body)#type dict
         trackerId = GetTrackerId(method.routing_key)
         geodata = dict()
-
+        
         #   check data format 
         if trackerId == None:
             raise Exception("Unknown tracker id ")
@@ -55,19 +57,22 @@ class Application():
         boundaryInfo = self.session.query(Boundary).filter(
             text("tracker_id=:trackerid and :current>=time_start and :current<=time_end")
         ).params(trackerid=trackerId,current=str(current_time)).one()
-
+        print('----------------------------------------')
+        print(boundaryInfo.id,boundaryInfo.lat,boundaryInfo.lng,boundaryInfo.radius)
         #   query this tracker's info
-        trackerInfo = self.session.query()
-        #   query the owner of this tracker (we need owner's phone number to send SMS message )
-        ownerInfo = self.session.query()
+        trackerInfo = self.session.query(Tracker).filter(text("id=:trackerid")).params(trackerid=trackerId).one()
 
+
+        # query the owner of this tracker (we need owner's phone number to send SMS message )
+        ownerInfo = self.session.query(User).filter(text("id=:userid")).params(userid=trackerInfo.user_id ).one()
+        
        
         if inboundary(geodata,{"Longitude":boundaryInfo.lng,"Latitude":boundaryInfo.lat},boundaryInfo.radius):
-            #do nothing 
-            pass 
+            print('在範圍內')
         else:
             #   send SMS message to owner of this tracker 
-            retv = SendSMS()  
- 
-        
+            msg = trackerInfo.tkrname + ' 已超出電子圍籬範圍'
+            retv = SendSMS(ownerInfo.phone,msg)
+            print('已超出範圍 並寄送簡訊')
+  
         ch.basic_ack(delivery_tag = method.delivery_tag)
