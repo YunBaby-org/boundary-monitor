@@ -32,8 +32,7 @@ class Application():
             logging.error(e)
             logging.error('Failed to handle , message unacked')
             logging.error('Payload content: %s'%str(body))
-            #   Todo
-            #   nack this message 
+
             
 
     #   AMQP message callback
@@ -47,18 +46,28 @@ class Application():
             raise Exception("Unknown tracker id ")
         
         #   handle only Geolocation message
-        if data['Response'] == 'ScanGPS' or data['Response'] == 'ScanWifiSignal_Resolved':
-            geodata['Longitude'] = data['Result']['Longitude'] 
-            geodata['Latitude'] = data['Result']['Latitude']   
+        if not(data['Response'] == 'ScanGPS' or data['Response'] == 'ScanWifiSignal_Resolved'):
+            ch.basic_ack(delivery_tag = method.delivery_tag)
+            return 
 
-        
-        #   query target's boundary information by current time
+        geodata['Longitude'] = data['Result']['Longitude'] 
+        geodata['Latitude'] = data['Result']['Latitude']         
+        print(trackerId+' '+str(geodata))
+      
         current_time = datetime.datetime.now(pytz.timezone('Asia/Taipei')).strftime("%Y-%m-%d %H:%M:%S%z")
-        boundaryInfo = self.session.query(Boundary).filter(
-            text("tracker_id=:trackerid and :current>=time_start and :current<=time_end")
-        ).params(trackerid=trackerId,current=str(current_time)).one()
-        print('----------------------------------------')
-        print(boundaryInfo.id,boundaryInfo.lat,boundaryInfo.lng,boundaryInfo.radius)
+
+        try:
+            boundaryInfo = self.session.query(Boundary).filter(
+                text("tracker_id=:trackerid and :current>=time_start and :current<=time_end")
+            ).params(trackerid=trackerId,current=str(current_time)).one()
+            print('----------------------------------------')
+            print(boundaryInfo.id,boundaryInfo.lat,boundaryInfo.lng,boundaryInfo.radius)
+        except Exception as e:
+            #   no boundary's info(stop directly)
+            logging.warning(trackerId+' no boundary currently')
+            ch.basic_ack(delivery_tag = method.delivery_tag)
+            return ;
+
         #   query this tracker's info
         trackerInfo = self.session.query(Tracker).filter(text("id=:trackerid")).params(trackerid=trackerId).one()
 
