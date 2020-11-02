@@ -1,12 +1,14 @@
 ## Env
-#### 1. DB_HOST
-#### 2. DB_PORT
-#### 3. DB_PASS
-#### 4. RABBITMQ_USER
-#### 5. RABBITMQ_PASS
-#### 6. RABBITMQ_PORT
-#### 7. RABBITMQ_HOST
-
+#### DB_HOST
+#### DB_PORT
+#### DB_USER
+#### DB_PASS
+#### RABBITMQ_USER
+#### RABBITMQ_PASS
+#### RABBITMQ_PORT
+#### RABBITMQ_HOST
+#### SMS_USER
+#### SMS_PASS
 ## SMS Service(簡訊服務)
 使用台灣簡訊
 https://www.twsms.com/
