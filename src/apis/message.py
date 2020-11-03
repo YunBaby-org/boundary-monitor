@@ -10,8 +10,8 @@ def SendSMS(mobile,message):
     global password 
     msg = 'username='+username+'&password='+password+'&mobile='+mobile+'&message='+urllib.parse.quote(message)
     ans = requests.post('http://api.twsms.com/json/sms_send.php?'+msg)
-    logging.info("SMS service response:")
-    logging.info(ans.text)
+    logging.info("SMS service response: "+str(ans.text))
+
     return json.loads(ans.text)
     #   {"code":"00000","text":"Success","msgid":340146985}
     #   code 00020 點數不足

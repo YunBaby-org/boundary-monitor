@@ -15,14 +15,17 @@ class Application():
         #   Setup PostgreSQL connection 
         self.session = DBsession()
         logging.info("PostgreSQL connection established")
+       
+  
         #   Setup AMQP connection & channel 
         self.amqpconnection = CreateAMQPConnection()
         self.amqpchannel = self.amqpconnection.channel()
 
         #   consume boundary monitor queue 
         self.amqpchannel.basic_consume(queue='monitor.boundary',on_message_callback=self.OnPreConsume)
+        logging.info('--------Start Consuming--------')
         self.amqpchannel.start_consuming()
-        logging.info("AMQP connection established")
+
   
     def OnPreConsume(self,ch, method, properties, body):
         try:
@@ -37,6 +40,8 @@ class Application():
 
     #   AMQP message callback
     def OnConsume(self,ch, method, properties, body):
+        
+        logging.info('--------Processing AMQP Message--------')
         data = json.loads(body)#type dict
         trackerId = GetTrackerId(method.routing_key)
         geodata = dict()
@@ -52,18 +57,19 @@ class Application():
 
         geodata['Longitude'] = data['Result']['Longitude'] 
         geodata['Latitude'] = data['Result']['Latitude']         
-        print(trackerId+' '+str(geodata))
-      
+        logging.info('msg: '+trackerId+' '+str(geodata))
+
         current_time = datetime.datetime.now(pytz.timezone('Asia/Taipei')).strftime("%Y-%m-%d %H:%M:%S%z")
 
         try:
             boundaryInfo = self.session.query(Boundary).filter(
                 text("tracker_id=:trackerid and :current>=time_start and :current<=time_end")
             ).params(trackerid=trackerId,current=str(current_time)).one()
-            print('----------------------------------------')
-            print(boundaryInfo.id,boundaryInfo.lat,boundaryInfo.lng,boundaryInfo.radius)
+            print(boundaryInfo.id,boundaryInfo.lat,boundaryInfo.lng,boundaryInfo.radius,flush=True)
         except Exception as e:
             #   no boundary's info(stop directly)
+            logging.error('boundary query error')
+            logging.error(e)
             logging.warning(trackerId+' no boundary currently')
             ch.basic_ack(delivery_tag = method.delivery_tag)
             return ;
@@ -77,11 +83,12 @@ class Application():
         
        
         if inboundary(geodata,{"Longitude":boundaryInfo.lng,"Latitude":boundaryInfo.lat},boundaryInfo.radius):
-            print('在範圍內')
+            logging.warning('目標在電子圍籬範圍內')
         else:
             #   send SMS message to owner of this tracker 
             msg = trackerInfo.tkrname + ' 已超出電子圍籬範圍'
             retv = SendSMS(ownerInfo.phone,msg)
-            print('已超出範圍 並寄送簡訊')
+            logging.warning('已超出範圍 並寄送簡訊')
+           
   
         ch.basic_ack(delivery_tag = method.delivery_tag)

@@ -7,6 +7,7 @@ import sys
 
 
 if __name__ == '__main__':
-    logging.info("Boundary Monitor Start!!!!!!")
+    logging.getLogger().setLevel(logging.INFO)
+    logging.info("Boundary Monitor Start")
     app = Application()
     app.start()

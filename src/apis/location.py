@@ -13,7 +13,6 @@ def inboundary(target,boundary,radius):
     c = float(2*math.atan2(math.sqrt(a),math.sqrt(1-a)))
     dist = float(earthRadius*c)
 
-    print("distance: "+str(math.fabs(dist))+' radius: '+str(radius))
     logging.info("distance: "+str(math.fabs(dist))+' radius: '+str(radius))
     
     return True if math.fabs(dist)<=radius else False

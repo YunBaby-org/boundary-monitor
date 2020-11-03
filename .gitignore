@@ -1,3 +1,4 @@
 .env
 __pycache__/
 note.txt
+docker reg.txt
