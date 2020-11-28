@@ -4,3 +4,4 @@ pika==1.1.0
 python-dotenv==0.14.0
 psycopg2==2.8.5
 requests==2.22.0
+redis==3.5.3
